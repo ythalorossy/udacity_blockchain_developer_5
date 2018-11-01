@@ -1,0 +1,16 @@
+{
+  "name": "udacity_blockchain_developer_5",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Udacity Blockchain Developer Nanodegree Project 5",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ythalo Rossy S. Lira <ythalorossy@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.0.0",
+    "truffle-hdwallet-provider": "0.0.6"
+  }
+}
