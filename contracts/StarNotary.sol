@@ -97,12 +97,14 @@ contract StarNotary is ERC721 {
 
         _mint(msg.sender, _tokenId);
 
+        uniqueHashStar[keccak256(abi.encodePacked(_ra, _dec, _mag))] = true;
+        
         return 0;
     }
 
     function putStarUpForSale(uint256 _tokenId, uint256 _price) public 
     {
-        require(this.ownerOf(_tokenId) == msg.sender);
+        require(_isApprovedOrOwner(msg.sender, _tokenId));
 
         starsForSale[_tokenId] = _price;
     }
@@ -132,39 +134,6 @@ contract StarNotary is ERC721 {
         super._mint(msg.sender, _tokenId);
     }
 
-    function approve(address to, uint256 tokenId ) public 
-    {
-        super.approve(to, tokenId);
-    }
-
-    function safeTransferFrom(address from, address to, uint256 tokenId ) public 
-    {
-        super.safeTransferFrom(from, to, tokenId);
-    }
-
-    function setApprovalForAll(address to, bool approved) public 
-    {
-        super.setApprovalForAll(to, approved);
-    }
-
-    function getApproved(uint256 tokenId) public view returns (address) 
-    {
-        return super.getApproved(tokenId);
-    }
-
-    function isApprovedForAll(address owner, address operator ) public view returns (bool)
-    {
-        return super.isApprovedForAll(owner, operator);
-    }
-
-    /**
-    * 
-     */
-    function ownerOf(uint256 tokenId) public view returns (address) 
-    {
-        return super.ownerOf(tokenId);
-    }
-
     /**
     * Retrive the star information based on the tokenId
     * @param _tokenId uint256 token 
@@ -178,4 +147,5 @@ contract StarNotary is ERC721 {
             tokenIdToStarInfo[_tokenId].coordinates.mag
         );
     }
+
 }
