@@ -206,6 +206,10 @@ contract('StarNotary', accounts => {
         it('can user0 approval token for all', async function () {
             let tx = await this.contract.setApprovalForAll(operator, true, { from: user0 });
             assert.equal(tx.logs[0].event, 'ApprovalForAll')
+
+            let isApproved = await this.contract.isApprovedForAll(user0, operator, { from: user0 });
+            assert.equal(isApproved, true);
+
         });
 
         it('can user1 behalf user0 put up their star for sale ', async function () {
@@ -219,15 +223,58 @@ contract('StarNotary', accounts => {
         });
 
         it('can user1 behalf user0 transfer token to user2', async function () {
-            
+
             let tx = await this.contract.setApprovalForAll(operator, true, { from: user0 });
             assert.equal(tx.logs[0].event, 'ApprovalForAll')
-            
+
             tx = await this.contract.safeTransferFrom(user0, user2, tokenId, { from: operator });
             assert.equal(await this.contract.ownerOf(tokenId), user2);
             assert.equal(tx.logs[0].event, 'Transfer')
         });
 
+        it('can user1 behalf user0 transfer token to user2', async function () {
+
+            let tx = await this.contract.setApprovalForAll(operator, true, { from: user0 });
+            assert.equal(tx.logs[0].event, 'ApprovalForAll')
+
+            tx = await this.contract.safeTransferFrom(user0, user2, tokenId, { from: operator });
+            assert.equal(await this.contract.ownerOf(tokenId), user2);
+            assert.equal(tx.logs[0].event, 'Transfer')
+        });
+
+        it('can check if user1 is approved', async function () {
+
+            let tx = await this.contract.approve(operator, tokenId, { from: user0 });
+            assert.equal(tx.logs[0].event, 'Approval');
+
+            let approvedAddress = await this.contract.getApproved(tokenId, { from: user0 });
+
+            assert.equal(approvedAddress, operator);
+
+        });
+
     });
+
+    describe('Owners', function () {
+
+        let tokenId = 1;
+        let starPrice = web3.toWei(.01, "ether");
+        let operator = user1;
+
+        beforeEach(async function () {
+            await this.contract.createStar(
+                starName, starStory, starRa, starDec, starMag, tokenId, { from: user0 });
+        });
+
+        it('User0 is the owner of star', async function () {
+            assert.equal(await this.contract.ownerOf( tokenId , { from : user0 } ), user0 );
+        })
+
+        it('can user0 transfer token to user1 and validate that user1 is owner', async function () {
+            await this.contract.safeTransferFrom(user0, user1, tokenId, { from: user0 });
+            assert.equal(await this.contract.ownerOf(tokenId), user1);
+        });
+
+    })
 
 });
