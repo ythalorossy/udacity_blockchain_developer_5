@@ -77,7 +77,7 @@ contract StarNotary is ERC721 {
         string _mag, 
         uint256 _tokenId // TODO: Is is need?
     ) 
-    public returns (uint index) 
+    public
     {
         // Checks if the all coordinates were filled 
         require(keccak256(abi.encodePacked(_ra)) != keccak256(""));
@@ -95,11 +95,9 @@ contract StarNotary is ERC721 {
         // Store 
         tokenIdToStarInfo[_tokenId] = newStar;
 
-        _mint(msg.sender, _tokenId);
-
         uniqueHashStar[keccak256(abi.encodePacked(_ra, _dec, _mag))] = true;
-        
-        return 0;
+
+        _mint(msg.sender, _tokenId);
     }
 
     function putStarUpForSale(uint256 _tokenId, uint256 _price) public 
