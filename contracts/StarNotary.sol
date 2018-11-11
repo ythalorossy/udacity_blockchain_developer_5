@@ -80,11 +80,11 @@ contract StarNotary is ERC721 {
     public
     {
         // Checks if the all coordinates were filled 
-        require(keccak256(abi.encodePacked(_ra)) != keccak256(""));
-        require(keccak256(abi.encodePacked(_dec)) != keccak256(""));
-        require(keccak256(abi.encodePacked(_mag)) != keccak256(""));
+        require(bytes(_ra).length > 0, "Not _ra coordinate provided.");
+        require(bytes(_dec).length > 0, "Not _dec coordinate provided.");
+        require(bytes(_mag).length > 0, "Not _mag coordinate provided.");
         // Checks the uniqueness ot the star
-        require(!checkIfStarExist(_ra, _dec, _mag));
+        require(!checkIfStarExist(_ra, _dec, _mag), "Star exists with provided coordinates.");
 
         // Prepare the coordinates
         StarCoordinates memory coordinates = StarCoordinates(_ra, _dec, _mag);

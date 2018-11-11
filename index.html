@@ -19,7 +19,7 @@
             flex: none;
         }
         .mdl-dialog {
-            width: 40%;
+            width: 50%;
         }
         
     </style>
@@ -59,6 +59,15 @@
                                 <div class="mdl-cell mdl-cell--4-col">
                                     <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                                         <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
+                                            id="star-ra" required>
+                                        <label class="mdl-textfield__label" for="star-ra">Ra</label>
+                                        <span class="mdl-textfield__error">Input is not a number!</span>
+                                    </div>
+                                </div>
+
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                        <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
                                             id="star-dec" required>
                                         <label class="mdl-textfield__label" for="star-dec">Dec</label>
                                         <span class="mdl-textfield__error">Input is not a number!</span>
@@ -69,14 +78,6 @@
                                         <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
                                             id="star-mag" required>
                                         <label class="mdl-textfield__label" for="star-mag">Mag</label>
-                                        <span class="mdl-textfield__error">Input is not a number!</span>
-                                    </div>
-                                </div>
-                                <div class="mdl-cell mdl-cell--4-col">
-                                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                        <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?"
-                                            id="star-cent" required>
-                                        <label class="mdl-textfield__label" for="star-cent">Cent</label>
                                         <span class="mdl-textfield__error">Input is not a number!</span>
                                     </div>
                                 </div>
@@ -101,16 +102,39 @@
                         <div class="mdl-tabs__panel" id="search-panel">
                             <div style="min-height: 300px">
                                 <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                    <input class="mdl-textfield__input" type="text" id="token-id">
-                                    <label class="mdl-textfield__label" for="token-id">Token ID</label>
+                                    <input class="mdl-textfield__input" type="text" id="search-token-id">
+                                    <label class="mdl-textfield__label" for="search-token-id">Token ID</label>
                                 </div>
+
+                                <div id="star-info-not-found">
+                                    <p>Star not found!</p>
+                                </div>
+                                <ul id="star-info-list" class="demo-list-icon mdl-list">
+                                    <li class="mdl-list__item">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-icon">star</i>
+                                            <span id="star-info-name"></span>
+                                        </span>
+                                    </li>
+                                    <li class="mdl-list__item">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-icon">reorder</i>
+                                            <span id="star-info-story"></span>
+                                        </span>
+                                    </li>
+                                    <li class="mdl-list__item">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-icon">scatter_plot</i>
+                                            <span id="star-info-coordinates"></span>
+                                        </span>
+                                    </li>
+
+                                </ul>
                             </div>
                         </div>
 
                     </div>
                     <div class="mdl-card__actions mdl-card--border">
-                        <!-- MDL Progress Bar with Indeterminate Progress -->
-                        <div id="starProgressBar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
 
                         <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" id="claim-button">
                             Claim Star
@@ -124,10 +148,10 @@
     </div>
 
     <dialog class="mdl-dialog">
-        <h3 class="mdl-dialog__title">Transaction TxHash</h3>
+        <h5 class="mdl-dialog__title"><span id="dialog-transaction-title"></span></h5>
         <div class="mdl-dialog__content">
-            <div id="dialog-transaction-message">
-            </div>
+            <div id="dialog-transaction-message"></div>
+            <div id="dialog-transaction-progressBar" class="mdl-progress mdl-js-progress mdl-progress__indeterminate"></div>
         </div>
         <div class="mdl-dialog__actions">
             <button type="button" class="mdl-button close">Close</button>
@@ -137,6 +161,8 @@
     <script>
 
         window.addEventListener('load', async () => {
+
+            const networkUrl = "https://rinkeby.etherscan.io";
 
             const isShow = (elemId, isShow) => {
                 document.querySelector(`#${elemId}`).style.display = isShow ? 'block' : 'none';
@@ -150,8 +176,12 @@
                 document.getElementById(elementId).value = '';
             }
 
+            const txLink = (tx) => {
+                return `<a href="${networkUrl}/tx/${tx}" target="_blank">${tx}</a>`;
+            }
+
             isShow('search-button', false);
-            isShow('starProgressBar', false);
+            isShow('dialog-transaction-progressBar', false);
 
             // Observes click events on Claim tab
             document.querySelector("#tab-claim").addEventListener('click', () => {
@@ -163,6 +193,8 @@
             document.querySelector("#tab-search").addEventListener('click', () => {
                 isShow('search-button', true);
                 isShow('claim-button', false);
+                isShow('star-info-not-found', false);
+                isShow('star-info-list', false)
             })
 
             // --- Dialog features ---
@@ -178,25 +210,21 @@
                 dialog.close();
             });
 
-            const updateDialog = (message, tx) => {
-                const url = `https://rinkeby.etherscan.io/tx/${tx}`;
-
-                document.querySelector("#dialog-transaction-message")
-                    .innerHTML = `<a href="${url}" target="_blank">${message}</a>`;
-
-                dialog.showModal();
+            const updateDialog = (title, message) => {
+                document.querySelector("#dialog-transaction-title").innerHTML = title;
+                document.querySelector("#dialog-transaction-message").innerHTML = message;
             }
             // --- End Dialog features ---
 
 
             if (!window.ethereum) {
                 console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
-            
+
             } else {
 
-                window.web3 = new Web3(ethereum);
-
                 try {
+
+                    window.web3 = new Web3(ethereum);
 
                     // Request account access if needed
                     await ethereum.enable();
@@ -572,12 +600,7 @@
                                 }
                             ],
                             "name": "createStar",
-                            "outputs": [
-                                {
-                                    "name": "index",
-                                    "type": "uint256"
-                                }
-                            ],
+                            "outputs": [],
                             "payable": false,
                             "stateMutability": "nonpayable",
                             "type": "function"
@@ -669,51 +692,82 @@
                     var StarNotary = web3.eth.contract(ABI);
 
                     // Grab the contract at specified deployed address with the interface defined by the ABI
-                    starNotary = StarNotary.at('0xeBF0eCcF986b692cF116e5a75Ed7e5E3F993c194');
+                    starNotary = StarNotary.at('0x900e8298676f6f2dd829c8351a73d3ab3c3f6006');
 
                     // Observes click events on Claim button
                     document.getElementById("claim-button").addEventListener("click", () => {
 
-                        isShow('starProgressBar', true);
-
                         // Get values from the form
                         const name = valueOf('star-name');
+                        const story = valueOf('star-story');
+                        const ra = valueOf('star-ra');
                         const dec = valueOf('star-dec');
                         const mag = valueOf('star-mag');
-                        const cent = valueOf('star-cent');
-                        const story = valueOf('star-story');
-                        const tokenId = parseInt(valueOf('token-id')) || 0
+                        const tokenId = parseInt(valueOf('token-id')) || 0;
 
                         web3.eth.getAccounts(function (err, accounts) {
 
                             // Call createStar function on StarNotary Contract
-                            starNotary.createStar.sendTransaction(name, story, cent, dec, mag, tokenId, {
+                            starNotary.createStar.sendTransaction(name, story, ra, dec, mag, tokenId, {
                                 from: accounts[0],
                                 gas: 5000000,
                                 gasPrice: 100000000000
                             }, function (error, tx) {
-                                
-                                isShow("starProgressBar", false);
-                                updateDialog(`Star claimed: ${tx}`, tx);
- 
+
+                                updateDialog("Please wait. Claiming Star on transaction", txLink(tx));
+
+                                isShow("dialog-transaction-progressBar", true);
+
+                                dialog.showModal();
+
                                 if (error) {
-                                    updateDialog(`Error claiming star: ${tx}`, tx);
+                                    updateDialog("Error Claiming Star on transaction", txLink(tx));
                                     console.log(error);
                                 }
 
                                 starNotary.Transfer().watch(function (err, result) {
-                                    isShow("starProgressBar", false);
-                                    updateDialog(`Star transfered with success: ${tx}`, tx);
+                                    isShow("dialog-transaction-progressBar", false);
+                                    updateDialog(`Star claimed with success`, txLink(tx));
                                 });
 
-                               cleanValue('star-name');
-                               cleanValue('star-dec');
-                               cleanValue('star-mag');
-                               cleanValue('star-cent');
-                               cleanValue('star-story');
-                               cleanValue('token-id');
+                                cleanValue('star-name');
+                                cleanValue('star-ra');
+                                cleanValue('star-dec');
+                                cleanValue('star-mag');
+                                cleanValue('star-story');
+                                cleanValue('token-id');
                             })
-                        })
+                        });
+                    });
+
+                    document.getElementById("search-button").addEventListener('click', function () {
+
+                        const tokenId = valueOf('search-token-id');
+
+                        web3.eth.getAccounts(function (err, accounts) {
+
+                            starNotary.tokenIdToStarInfo.call(tokenId, function (error, info) {
+
+                                if (error) {
+                                    console.log(error);
+                                } else {
+                                    console.log(info);
+
+                                    if (info[0]) {
+                                        isShow('star-info-list', true);
+                                        isShow('star-info-not-found', false);
+                                        document.querySelector("#star-info-name").innerHTML = info[0]; // Name
+                                        document.querySelector("#star-info-story").innerHTML = info[1]; // Story
+                                        const coordinates = `Ra: ${info[2]}, Dec: ${info[3]}, Mag: ${info[4]}`;
+                                        document.querySelector("#star-info-coordinates").innerHTML = coordinates; // Coordinates
+                                    } else {
+                                        isShow('star-info-list', false);
+                                        isShow('star-info-not-found', true);
+                                    }
+                                }
+
+                            });
+                        });
                     });
 
                 } catch (error) {
