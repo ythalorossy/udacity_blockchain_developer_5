@@ -51,7 +51,7 @@ http-server
 
 After run the command http-server the application will be aavliable on the url http://localhost:8080.
 
-### Claimina Star
+### Claiming a Star
 
 [http://localhost:8000/](href='http://localhost:8000/')
 
